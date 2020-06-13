@@ -24,10 +24,6 @@ stages:
     - ls -latr ./dist
     - cp -r ./dist/* ../
     - cp -r ./mocks/api ../
-    - cd ..
-    - rm -rf estafette-ci-web
-    - find ./api -iname "GET.json" -exec rename GET.json index.json '{}' \;
-    - ls -latr
   
   build:
     image: golang:1.14.4-alpine3.12
@@ -41,7 +37,8 @@ stages:
     - cd src
     - go test ./...
     - cd ..
-    - rm -rf src
+    - rm -rf estafette-ci-web src .estafette.yaml .git
+    - find ./api -iname "GET.json" -exec rename GET.json index.json '{}' \;
     - ls -latr
   
   trigger-github-pages-build:
