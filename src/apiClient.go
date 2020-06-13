@@ -79,7 +79,7 @@ func (c *apiClient) GetPipelines(ctx context.Context, token string, pageNumber, 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetOrganizations")
 	defer span.Finish()
 
-	getPipelinesURL := fmt.Sprintf("%v/api/organizations?page[number]=%v&page[size]=%v", c.apiBaseURL, pageNumber, pageSize)
+	getPipelinesURL := fmt.Sprintf("%v/api/pipelines?page[number]=%v&page[size]=%v", c.apiBaseURL, pageNumber, pageSize)
 	for k, v := range filters {
 		for _, vv := range v {
 			getPipelinesURL += "&" + k + "=" + vv
@@ -96,44 +96,11 @@ func (c *apiClient) GetPipelines(ctx context.Context, token string, pageNumber, 
 	// unmarshal json body
 	err = json.Unmarshal(responseBody, &response)
 	if err != nil {
-		log.Error().Err(err).Str("body", string(responseBody)).Msgf("Failed unmarshalling get organizations response")
+		log.Error().Err(err).Str("body", string(responseBody)).Msgf("Failed unmarshalling get pipelines response from %v", getPipelinesURL)
 		return
 	}
 
 	return response, nil
-}
-
-func (c *apiClient) getOrganizationsPage(ctx context.Context, token string, pageNumber, pageSize int) (organizations []*contracts.Organization, pagination contracts.Pagination, err error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::getOrganizationsPage")
-	defer span.Finish()
-
-	span.LogKV("page[number]", pageNumber, "page[size]", pageSize)
-
-	getOrganizationsURL := fmt.Sprintf("%v/api/pipelines?page[number]=%v&page[size]=%v", c.apiBaseURL, pageNumber, pageSize)
-	headers := map[string]string{
-		"Authorization": fmt.Sprintf("Bearer %v", token),
-		"Content-Type":  "application/json",
-	}
-
-	responseBody, err := c.getRequest(getOrganizationsURL, span, nil, headers)
-
-	var listResponse struct {
-		Items      []*contracts.Organization `json:"items"`
-		Pagination contracts.Pagination      `json:"pagination"`
-	}
-
-	// unmarshal json body
-	err = json.Unmarshal(responseBody, &listResponse)
-	if err != nil {
-		log.Error().Err(err).Str("body", string(responseBody)).Msgf("Failed unmarshalling get organizations response")
-		return
-	}
-
-	organizations = listResponse.Items
-
-	span.LogKV("organizations", len(organizations))
-
-	return organizations, listResponse.Pagination, nil
 }
 
 func (c *apiClient) getRequest(uri string, span opentracing.Span, requestBody io.Reader, headers map[string]string, allowedStatusCodes ...int) (responseBody []byte, err error) {
