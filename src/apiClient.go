@@ -109,7 +109,7 @@ func (c *apiClient) getOrganizationsPage(ctx context.Context, token string, page
 
 	span.LogKV("page[number]", pageNumber, "page[size]", pageSize)
 
-	getOrganizationsURL := fmt.Sprintf("%v/api/organizations?page[number]=%v&page[size]=%v", c.apiBaseURL, pageNumber, pageSize)
+	getOrganizationsURL := fmt.Sprintf("%v/api/pipelines?page[number]=%v&page[size]=%v", c.apiBaseURL, pageNumber, pageSize)
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %v", token),
 		"Content-Type":  "application/json",
