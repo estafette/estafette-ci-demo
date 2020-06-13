@@ -10,18 +10,6 @@ version:
     minor: 0
 
 stages:
-  build:
-    image: golang:1.14.4-alpine3.12
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      API_BASE_URL: estafette.secret(Jm3svElcRfJPjJQM.XBvzoRHzIcxTE4zG_hWTqWu92qEpFPSOm-xPQ8rLgAhnsEdQENG-A9QT4dhRaFd5R0aaPyRLHK0RNU1R.UwbzuRerIIBZDdfC6wSGu2vn2qtpHe6UnaRDWcrL3wVv8Q1BD9_TOSpSGHujTofJdKL1qLz6)
-      CLIENT_ID: estafette.secret(KfCj5KRJs1qPz-uJ.RyvZ1CkSdYM-Qecj0V0A4VABnu0VsvI4Rc99EYN5BqYWV5ta-LTw2KJ7He-I6ofi98vAfw==.EXHP2GsSa9h8HalxxgRVsgZEx-oJ4bFhRZ95Xcd5SvxGHMZZW5B7POnMNNBErVeNTzwh5drK)
-      CLIENT_SECRET: estafette.secret(XD_I0I2gSLZPnMGs.ON-XFNtnrbeoAPxbTZ8kXXL2dg7dRdXMXHs_syvex2Nuc885XC43xT3W6A2yYNmcFdcVt9qOI0GjJLb8mAgY3lQcsZhNyF8UtlDDkwofKTI=.HMS0T_dR24adXrhufZx0DFXgVznLS8nQZUkJq2bJs0wyEucffynwrgy7LbmNBEl4oxakRKKi)
-    commands:
-    - cd src
-    - go test ./...
-
   clone-web-repo:
     image: extensions/git-clone:dev
     repo: estafette-ci-web
@@ -35,8 +23,25 @@ stages:
     - npm run build
     - ls -latr ./dist
     - cp -r ./dist/* ../
+    - cp -r ./mocks/api ../
     - cd ..
-    - rm -rf estafette-ci-web src
+    - rm -rf estafette-ci-web
+    - find ./api -iname "GET.json" -exec rename GET.json index.json '{}' \;
+    - ls -latr
+  
+  build:
+    image: golang:1.14.4-alpine3.12
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      API_BASE_URL: estafette.secret(Jm3svElcRfJPjJQM.XBvzoRHzIcxTE4zG_hWTqWu92qEpFPSOm-xPQ8rLgAhnsEdQENG-A9QT4dhRaFd5R0aaPyRLHK0RNU1R.UwbzuRerIIBZDdfC6wSGu2vn2qtpHe6UnaRDWcrL3wVv8Q1BD9_TOSpSGHujTofJdKL1qLz6)
+      CLIENT_ID: estafette.secret(KfCj5KRJs1qPz-uJ.RyvZ1CkSdYM-Qecj0V0A4VABnu0VsvI4Rc99EYN5BqYWV5ta-LTw2KJ7He-I6ofi98vAfw==.EXHP2GsSa9h8HalxxgRVsgZEx-oJ4bFhRZ95Xcd5SvxGHMZZW5B7POnMNNBErVeNTzwh5drK)
+      CLIENT_SECRET: estafette.secret(XD_I0I2gSLZPnMGs.ON-XFNtnrbeoAPxbTZ8kXXL2dg7dRdXMXHs_syvex2Nuc885XC43xT3W6A2yYNmcFdcVt9qOI0GjJLb8mAgY3lQcsZhNyF8UtlDDkwofKTI=.HMS0T_dR24adXrhufZx0DFXgVznLS8nQZUkJq2bJs0wyEucffynwrgy7LbmNBEl4oxakRKKi)
+    commands:
+    - cd src
+    - go test ./...
+    - cd ..
+    - rm -rf src
     - ls -latr
   
   trigger-github-pages-build:
