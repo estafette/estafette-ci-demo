@@ -27,6 +27,7 @@ type ApiClient interface {
 	GetPipeline(ctx context.Context, token string, pipelinePath string) (pipeline *contracts.Pipeline, err error)
 	GetPipelineBuilds(ctx context.Context, token string, pipelinePath string) (response PipelineBuildsListResponse, err error)
 	GetPipelineReleases(ctx context.Context, token string, pipelinePath string) (response PipelineReleasesListResponse, err error)
+	GetBytesResponse(ctx context.Context, token string, path string) (bytes []byte, err error)
 }
 
 // NewApiClient returns a new ApiClient
@@ -60,6 +61,9 @@ func (c *apiClient) GetToken(ctx context.Context, clientID, clientSecret string)
 	}
 
 	responseBody, err := c.postRequest(getTokenURL, span, strings.NewReader(string(bytes)), headers)
+	if err != nil {
+		return
+	}
 
 	tokenResponse := struct {
 		Token string `json:"token"`
@@ -93,6 +97,9 @@ func (c *apiClient) GetPipelines(ctx context.Context, token string, pageNumber, 
 	}
 
 	responseBody, err := c.getRequest(getPipelinesURL, span, nil, headers)
+	if err != nil {
+		return
+	}
 
 	// unmarshal json body
 	err = json.Unmarshal(responseBody, &response)
@@ -117,6 +124,9 @@ func (c *apiClient) GetPipeline(ctx context.Context, token string, pipelinePath 
 	}
 
 	responseBody, err := c.getRequest(getPipelineURL, span, nil, headers)
+	if err != nil {
+		return
+	}
 
 	// unmarshal json body
 	err = json.Unmarshal(responseBody, &pipeline)
@@ -141,6 +151,9 @@ func (c *apiClient) GetPipelineBuilds(ctx context.Context, token string, pipelin
 	}
 
 	responseBody, err := c.getRequest(getPipelineBuildsURL, span, nil, headers)
+	if err != nil {
+		return
+	}
 
 	// unmarshal json body
 	err = json.Unmarshal(responseBody, &response)
@@ -165,6 +178,9 @@ func (c *apiClient) GetPipelineReleases(ctx context.Context, token string, pipel
 	}
 
 	responseBody, err := c.getRequest(getPipelineReleasesURL, span, nil, headers)
+	if err != nil {
+		return
+	}
 
 	// unmarshal json body
 	err = json.Unmarshal(responseBody, &response)
@@ -174,6 +190,26 @@ func (c *apiClient) GetPipelineReleases(ctx context.Context, token string, pipel
 	}
 
 	return response, nil
+}
+
+func (c *apiClient) GetBytesResponse(ctx context.Context, token string, path string) (bytes []byte, err error) {
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineReleases")
+	defer span.Finish()
+
+	url := fmt.Sprintf("%v%v", c.apiBaseURL, path)
+
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %v", token),
+		"Content-Type":  "application/json",
+	}
+
+	bytes, err = c.getRequest(url, span, nil, headers)
+	if err != nil {
+		return
+	}
+
+	return bytes, nil
 }
 
 func (c *apiClient) getRequest(uri string, span opentracing.Span, requestBody io.Reader, headers map[string]string, allowedStatusCodes ...int) (responseBody []byte, err error) {

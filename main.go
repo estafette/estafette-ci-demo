@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -67,7 +68,7 @@ func main() {
 		pipeline, err := apiClient.GetPipeline(ctx, token, p)
 		handleError(closer, err, "Failed fetching pipeline")
 
-		log.Info().Msgf("Fetched %v", p)
+		log.Info().Msgf("Fetched /api/pipelines/%v", p)
 
 		if pipeline != nil {
 			pipelines.Items = append(pipelines.Items)
@@ -92,7 +93,7 @@ func main() {
 			builds.Pagination.TotalPages = 1
 			builds.Pagination.TotalItems = len(builds.Items)
 
-			log.Info().Msgf("Fetched %v/builds", p)
+			log.Info().Msgf("Fetched /api/pipelines/%v/builds", p)
 
 			targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "builds")
 			err = os.MkdirAll(targetDir, os.ModePerm)
@@ -113,7 +114,7 @@ func main() {
 			releases.Pagination.TotalPages = 1
 			releases.Pagination.TotalItems = len(builds.Items)
 
-			log.Info().Msgf("Fetched %v/releases", p)
+			log.Info().Msgf("Fetched /api/pipelines/%v/releases", p)
 
 			targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "releases")
 			err = os.MkdirAll(targetDir, os.ModePerm)
@@ -127,6 +128,23 @@ func main() {
 			handleError(closer, err, "Failed saving releases json")
 
 			log.Info().Msgf("Saved %v", targetPath)
+
+			pipelinesSubPaths := []string{"warnings", "buildsdurations", "buildscpu", "buildsmemory", "releasesdurations", "releasescpu", "releasesmemory"}
+			for _, path := range pipelinesSubPaths {
+
+				bytes, err := apiClient.GetBytesResponse(ctx, token, fmt.Sprintf("/api/pipelines/%v/%v", p, path))
+				handleError(closer, err, "Failed fetching bytes response")
+
+				log.Info().Msgf("Fetched /api/pipelines/%v/%v", p, path)
+
+				targetDir = filepath.Join(*saveToDirectory, "pipelines", p, path)
+				err = os.MkdirAll(targetDir, os.ModePerm)
+				handleError(closer, err, "Failed creating bytes target dir")
+
+				targetPath := filepath.Join(targetDir, "/GET.json")
+				err = ioutil.WriteFile(targetPath, bytes, 0644)
+				handleError(closer, err, "Failed saving bytes json")
+			}
 		}
 	}
 
