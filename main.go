@@ -73,8 +73,6 @@ func main() {
 
 			obfuscatePipeline(pipeline)
 
-			log.Debug().Msgf("pipeline.Commits: %v", pipeline.Commits)
-
 			pipelines.Items = append(pipelines.Items, pipeline)
 
 			err = saveObjectToFile(filepath.Join("/api/pipelines", p), pipeline)
@@ -103,8 +101,6 @@ func main() {
 					defer func() { <-semaphore }()
 
 					obfuscateBuild(build)
-
-					log.Debug().Msgf("build.Commits: %v", build.Commits)
 
 					// store build json
 					url := fmt.Sprintf("/api/pipelines/%v/builds/%v", p, build.ID)
@@ -147,12 +143,6 @@ func main() {
 					defer func() { <-semaphore }()
 
 					obfuscateRelease(release)
-
-					for _, e := range release.Events {
-						if e.Manual != nil {
-							log.Debug().Msgf("release.Events.Manual: %v", e.Manual)
-						}
-					}
 
 					// store release json
 					url := fmt.Sprintf("/api/pipelines/%v/releases/%v", p, release.ID)

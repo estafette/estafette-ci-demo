@@ -36,3 +36,22 @@ stages:
       ESTAFETTE_LOG_FORMAT: console
     commands:
     - ./${ESTAFETTE_GIT_NAME}
+
+  git-clone-web:
+    image: extensions/git-clone:dev
+    repo: estafette-ci-web
+    branch: master
+
+  copy-mock-data:
+    image: golang:1.14.4-alpine3.12
+    env:
+      GIT_USER_EMAIL: estafette.secret(0ZJRd1ti_4HlsYz6.ie7ynUsbOMTuDEkvBdvDAmB1UL9Hu0YmxTpEve2ARAE_wTonhpe65Ek=)
+      GIT_USER_NAME: estafette.secret(nbg9Avv8R7CoZ1O4.GDU-1JwnPpzaBsDcjJhX4CyRhspe4amlBflh3OQoPQ==)
+    commands:
+    - cp -r mocks/api/pipelines estafette-ci-web/mocks/api
+    - apk add git
+    - cd estafette-ci-web
+    - git config --global user.email "${GIT_USER_EMAIL}"
+    - git config --global user.name "${GIT_USER_NAME}"
+    - git add --all && git commit --allow-empty -m "estafette-ci-demo ${ESTAFETTE_BUILD_VERSION}"
+    - git push origin master
