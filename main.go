@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -69,7 +70,12 @@ func main() {
 		handleError(closer, err)
 
 		if pipeline != nil {
-			pipelines.Items = append(pipelines.Items)
+
+			obfuscatePipeline(pipeline)
+
+			log.Debug().Msgf("pipeline.Commits: %v", pipeline.Commits)
+
+			pipelines.Items = append(pipelines.Items, pipeline)
 
 			err = saveObjectToFile(filepath.Join("/api/pipelines", p), pipeline)
 			handleError(closer, err)
@@ -96,6 +102,10 @@ func main() {
 					// lower semaphore once the routine's finished, making room for another one to start
 					defer func() { <-semaphore }()
 
+					obfuscateBuild(build)
+
+					log.Debug().Msgf("build.Commits: %v", build.Commits)
+
 					// store build json
 					url := fmt.Sprintf("/api/pipelines/%v/builds/%v", p, build.ID)
 
@@ -110,6 +120,8 @@ func main() {
 
 					bytes, err = apiClient.GetBytesResponse(ctx, token, url)
 					handleError(closer, err)
+
+					bytes = obfuscateLog(bytes)
 
 					err = saveBytesToFile(url, bytes)
 					handleError(closer, err)
@@ -134,6 +146,10 @@ func main() {
 					// lower semaphore once the routine's finished, making room for another one to start
 					defer func() { <-semaphore }()
 
+					obfuscateRelease(release)
+
+					log.Debug().Msgf("release.Events: %v", release.Events)
+
 					// store release json
 					url := fmt.Sprintf("/api/pipelines/%v/releases/%v", p, release.ID)
 
@@ -148,6 +164,8 @@ func main() {
 
 					bytes, err = apiClient.GetBytesResponse(ctx, token, url)
 					handleError(closer, err)
+
+					bytes = obfuscateLog(bytes)
 
 					err = saveBytesToFile(url, bytes)
 					handleError(closer, err)
@@ -243,4 +261,29 @@ func saveBytesToFile(path string, bytes []byte) (err error) {
 	log.Info().Msgf("Fetched and saved %v", path)
 
 	return nil
+}
+
+func obfuscatePipeline(pipeline *contracts.Pipeline) {
+	for i := 0; i < len(pipeline.Commits); i++ {
+		pipeline.Commits[i].Author.Email = "me@estafette.io"
+	}
+}
+
+func obfuscateBuild(build *contracts.Build) {
+	for i := 0; i < len(build.Commits); i++ {
+		build.Commits[i].Author.Email = "me@estafette.io"
+	}
+}
+
+func obfuscateRelease(release *contracts.Release) {
+	for i := 0; i < len(release.Events); i++ {
+		if release.Events[i].Manual != nil {
+			release.Events[i].Manual.UserID = "me@estafette.io"
+		}
+	}
+}
+
+func obfuscateLog(bytes []byte) []byte {
+	re := regexp.MustCompile(`[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com`)
+	return re.ReplaceAll(bytes, []byte("***@***.iam.gserviceaccount.com"))
 }
