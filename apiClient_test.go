@@ -19,7 +19,7 @@ func TestGetToken(t *testing.T) {
 		getBaseURL := os.Getenv("API_BASE_URL")
 		clientID := os.Getenv("CLIENT_ID")
 		clientSecret := os.Getenv("CLIENT_SECRET")
-		client := NewApiClient(getBaseURL, "")
+		client := NewApiClient(getBaseURL)
 
 		// act
 		token, err := client.GetToken(ctx, clientID, clientSecret)
@@ -40,7 +40,7 @@ func TestGetPipelines(t *testing.T) {
 		getBaseURL := os.Getenv("API_BASE_URL")
 		clientID := os.Getenv("CLIENT_ID")
 		clientSecret := os.Getenv("CLIENT_SECRET")
-		client := NewApiClient(getBaseURL, "")
+		client := NewApiClient(getBaseURL)
 		token, err := client.GetToken(ctx, clientID, clientSecret)
 		assert.Nil(t, err)
 		pageNumber := 1

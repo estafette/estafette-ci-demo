@@ -2,7 +2,9 @@ builder:
   track: dev
 
 labels:
-  team: estafette-tea
+  app-group: estafette-ci
+  team: estafette-team
+  language: golang
 
 version:
   semver:
@@ -10,26 +12,6 @@ version:
     minor: 0
 
 stages:
-  clone-web-repo:
-    image: extensions/git-clone:dev
-    repo: estafette-ci-web
-    branch: master
-
-  clone-master-branch-of-this-repo:
-    image: extensions/git-clone:dev
-    branch: master
-    subdir: dest
-
-  build-web:
-    image: node:13.6.0-alpine
-    commands:
-    - cd estafette-ci-web
-    - npm ci
-    - npm run build
-    - ls -latr ./dist
-    - cp -r ./dist/* ../
-    - cp -r ./mocks/api ../
-  
   build:
     image: golang:1.14.4-alpine3.12
     env:
@@ -39,32 +21,17 @@ stages:
       CLIENT_ID: estafette.secret(KfCj5KRJs1qPz-uJ.RyvZ1CkSdYM-Qecj0V0A4VABnu0VsvI4Rc99EYN5BqYWV5ta-LTw2KJ7He-I6ofi98vAfw==.EXHP2GsSa9h8HalxxgRVsgZEx-oJ4bFhRZ95Xcd5SvxGHMZZW5B7POnMNNBErVeNTzwh5drK)
       CLIENT_SECRET: estafette.secret(XD_I0I2gSLZPnMGs.ON-XFNtnrbeoAPxbTZ8kXXL2dg7dRdXMXHs_syvex2Nuc885XC43xT3W6A2yYNmcFdcVt9qOI0GjJLb8mAgY3lQcsZhNyF8UtlDDkwofKTI=.HMS0T_dR24adXrhufZx0DFXgVznLS8nQZUkJq2bJs0wyEucffynwrgy7LbmNBEl4oxakRKKi)
     commands:
-    - cd src
     - go test ./...
-    - cd ..
-    - rm -rf estafette-ci-web src .estafette.yaml .git
-    - find ./api -iname "GET.json" -exec rename GET.json index.json '{}' \;
-    - ls -latr
-    - rm -rf dest/*
-    - cp -r * dest/
+    - go build -a -installsuffix cgo -ldflags "-X main.appgroup=${ESTAFETTE_LABEL_APP_GROUP} -X main.app=${ESTAFETTE_GIT_NAME} -X main.version=${ESTAFETTE_BUILD_VERSION} -X main.revision=${ESTAFETTE_GIT_REVISION} -X main.branch=${ESTAFETTE_GIT_BRANCH} -X main.buildDate=${ESTAFETTE_BUILD_DATETIME}" -o ./${ESTAFETTE_GIT_NAME} .
 
-  # copy-to-master-branch:
-  #   image: golang:1.14.4-alpine3.12
-  #   env:
-  #     GIT_USER_EMAIL: estafette.secret(0ZJRd1ti_4HlsYz6.ie7ynUsbOMTuDEkvBdvDAmB1UL9Hu0YmxTpEve2ARAE_wTonhpe65Ek=)
-  #     GIT_USER_NAME: estafette.secret(nbg9Avv8R7CoZ1O4.GDU-1JwnPpzaBsDcjJhX4CyRhspe4amlBflh3OQoPQ==)
-  #   commands:
-  #   - apk add git
-  #   - cd dest
-  #   - rm -rf dest
-  #   - git config --global user.email "${GIT_USER_EMAIL}"
-  #   - git config --global user.name "${GIT_USER_NAME}"
-  #   - git add --all && git commit --allow-empty -m "${ESTAFETTE_BUILD_VERSION}"
-  #   - git push origin master
-
-  trigger-github-pages-build:
-    image: extensions/github-pages:dev
-    token: estafette.secret(N-zMCcPQnKYI5Km4.P3AN60mmox8JRoUpFxCdWGsL8CAmvVJ_2inVz7TV4stWN_pdu4xb3TIvvRXyEYP0dFwEzIthYsQ=)
-    when:
-      status == 'succeeded' &&
-      branch == 'master'
+  extract-data:
+    image: golang:1.14.4-alpine3.12
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      API_BASE_URL: estafette.secret(Jm3svElcRfJPjJQM.XBvzoRHzIcxTE4zG_hWTqWu92qEpFPSOm-xPQ8rLgAhnsEdQENG-A9QT4dhRaFd5R0aaPyRLHK0RNU1R.UwbzuRerIIBZDdfC6wSGu2vn2qtpHe6UnaRDWcrL3wVv8Q1BD9_TOSpSGHujTofJdKL1qLz6)
+      CLIENT_ID: estafette.secret(KfCj5KRJs1qPz-uJ.RyvZ1CkSdYM-Qecj0V0A4VABnu0VsvI4Rc99EYN5BqYWV5ta-LTw2KJ7He-I6ofi98vAfw==.EXHP2GsSa9h8HalxxgRVsgZEx-oJ4bFhRZ95Xcd5SvxGHMZZW5B7POnMNNBErVeNTzwh5drK)
+      CLIENT_SECRET: estafette.secret(XD_I0I2gSLZPnMGs.ON-XFNtnrbeoAPxbTZ8kXXL2dg7dRdXMXHs_syvex2Nuc885XC43xT3W6A2yYNmcFdcVt9qOI0GjJLb8mAgY3lQcsZhNyF8UtlDDkwofKTI=.HMS0T_dR24adXrhufZx0DFXgVznLS8nQZUkJq2bJs0wyEucffynwrgy7LbmNBEl4oxakRKKi)
+      PIPELINES_TO_EXTRACT: github.com/estafette/estafette-ci-api,github.com/estafette/estafette-ci-builder,github.com/estafette/estafette-ci-web
+    commands:
+    - ./${ESTAFETTE_GIT_NAME}
