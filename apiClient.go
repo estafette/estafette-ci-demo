@@ -143,7 +143,7 @@ func (c *apiClient) GetPipelineBuilds(ctx context.Context, token string, pipelin
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineBuilds")
 	defer span.Finish()
 
-	getPipelineBuildsURL := fmt.Sprintf("%v/api/pipelines/%v/builds", c.apiBaseURL, pipelinePath)
+	getPipelineBuildsURL := fmt.Sprintf("%v/api/pipelines/%v/builds?page[number]=%v&page[size]=%v", c.apiBaseURL, pipelinePath, 1, 10)
 
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %v", token),
@@ -170,7 +170,7 @@ func (c *apiClient) GetPipelineReleases(ctx context.Context, token string, pipel
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineReleases")
 	defer span.Finish()
 
-	getPipelineReleasesURL := fmt.Sprintf("%v/api/pipelines/%v/releases", c.apiBaseURL, pipelinePath)
+	getPipelineReleasesURL := fmt.Sprintf("%v/api/pipelines/%v/releases?page[number]=%v&page[size]=%v", c.apiBaseURL, pipelinePath, 1, 10)
 
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %v", token),
@@ -194,7 +194,7 @@ func (c *apiClient) GetPipelineReleases(ctx context.Context, token string, pipel
 
 func (c *apiClient) GetBytesResponse(ctx context.Context, token string, path string) (bytes []byte, err error) {
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineReleases")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetBytesResponse")
 	defer span.Finish()
 
 	url := fmt.Sprintf("%v%v", c.apiBaseURL, path)

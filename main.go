@@ -38,6 +38,7 @@ var (
 	// other params for gsuiteClient
 	pipelinesToExtract = kingpin.Flag("pipelines-to-extract", "A comma separated list of pipelines to extract.").Envar("PIPELINES_TO_EXTRACT").Required().String()
 	saveToDirectory    = kingpin.Flag("save-to-directory", "Directory to store responses.").Default("./mocks").OverrideDefaultFromEnvar("SAVE_TO_DIRECTORY").String()
+	logObfuscateRegex  = kingpin.Flag("log-obfuscate-regex", "Regular expression to obfuscate parts of the logs").Envar("LOG_OBFUSCATE_REGEX").String()
 )
 
 func main() {
@@ -263,6 +264,16 @@ func obfuscatePipeline(pipeline *contracts.Pipeline) {
 		pipeline.Commits[i].Author.Name = "Just Me"
 		pipeline.Commits[i].Author.Username = "JustMe"
 	}
+
+	for i := 0; i < len(pipeline.ReleaseTargets); i++ {
+		for j := 0; j < len(pipeline.ReleaseTargets[i].ActiveReleases); j++ {
+			for k := 0; k < len(pipeline.ReleaseTargets[i].ActiveReleases[j].Events); k++ {
+				if pipeline.ReleaseTargets[i].ActiveReleases[j].Events[k].Manual != nil {
+					pipeline.ReleaseTargets[i].ActiveReleases[j].Events[k].Manual.UserID = "me@estafette.io"
+				}
+			}
+		}
+	}
 }
 
 func obfuscateBuild(build *contracts.Build) {
@@ -283,5 +294,12 @@ func obfuscateRelease(release *contracts.Release) {
 
 func obfuscateLog(bytes []byte) []byte {
 	re := regexp.MustCompile(`[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com`)
-	return re.ReplaceAll(bytes, []byte("***@***.iam.gserviceaccount.com"))
+	bytes = re.ReplaceAll(bytes, []byte("***@***.iam.gserviceaccount.com"))
+
+	if *logObfuscateRegex != "" {
+		re2 := regexp.MustCompile(*logObfuscateRegex)
+		bytes = re2.ReplaceAll(bytes, []byte("***"))
+	}
+
+	return bytes
 }

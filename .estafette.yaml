@@ -33,6 +33,7 @@ stages:
       CLIENT_ID: estafette.secret(KfCj5KRJs1qPz-uJ.RyvZ1CkSdYM-Qecj0V0A4VABnu0VsvI4Rc99EYN5BqYWV5ta-LTw2KJ7He-I6ofi98vAfw==.EXHP2GsSa9h8HalxxgRVsgZEx-oJ4bFhRZ95Xcd5SvxGHMZZW5B7POnMNNBErVeNTzwh5drK)
       CLIENT_SECRET: estafette.secret(XD_I0I2gSLZPnMGs.ON-XFNtnrbeoAPxbTZ8kXXL2dg7dRdXMXHs_syvex2Nuc885XC43xT3W6A2yYNmcFdcVt9qOI0GjJLb8mAgY3lQcsZhNyF8UtlDDkwofKTI=.HMS0T_dR24adXrhufZx0DFXgVznLS8nQZUkJq2bJs0wyEucffynwrgy7LbmNBEl4oxakRKKi)
       PIPELINES_TO_EXTRACT: github.com/estafette/estafette-ci-api,github.com/estafette/estafette-ci-builder,github.com/estafette/estafette-ci-contracts,github.com/estafette/estafette-ci-crypt,github.com/estafette/estafette-ci-manifest,github.com/estafette/estafette-ci-web,github.com/estafette/estafette-cloudflare-dns,github.com/estafette/estafette-letsencrypt-certificate
+	    LOG_OBFUSCATE_REGEX: estafette.secret(uOIBgf3SjR_xvrMd.gvoQggnmYouhIDMmKvSjoHcbStntOA==.keEFnBX820Mvk95f1YkdQECEQ2aEh3zGLTZZtf0SEw1BJyrk9EBYyLZeXs0pWdX-p2svZZ5Y)
       ESTAFETTE_LOG_FORMAT: console
     commands:
     - ./${ESTAFETTE_GIT_NAME}
@@ -48,6 +49,7 @@ stages:
       GIT_USER_EMAIL: estafette.secret(0ZJRd1ti_4HlsYz6.ie7ynUsbOMTuDEkvBdvDAmB1UL9Hu0YmxTpEve2ARAE_wTonhpe65Ek=)
       GIT_USER_NAME: estafette.secret(nbg9Avv8R7CoZ1O4.GDU-1JwnPpzaBsDcjJhX4CyRhspe4amlBflh3OQoPQ==)
     commands:
+    - rm -rf estafette-ci-web/mocks/api/pipelines
     - cp -r mocks/api/pipelines estafette-ci-web/mocks/api
     - apk add git
     - cd estafette-ci-web
