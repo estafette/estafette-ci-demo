@@ -66,6 +66,9 @@ func main() {
 	for _, p := range strings.Split(*pipelinesToExtract, ",") {
 		pipeline, err := apiClient.GetPipeline(ctx, token, p)
 		handleError(closer, err, "Failed fetching pipeline")
+
+		log.Info().Msgf("Fetched %v", p)
+
 		if pipeline != nil {
 			pipelines.Items = append(pipelines.Items)
 
@@ -77,14 +80,19 @@ func main() {
 			file, err := json.MarshalIndent(pipeline, "", "  ")
 			handleError(closer, err, "Failed marshalling pipeline")
 
-			err = ioutil.WriteFile(filepath.Join(targetDir, "/GET.json"), file, 0644)
+			targetPath := filepath.Join(targetDir, "/GET.json")
+			err = ioutil.WriteFile(targetPath, file, 0644)
 			handleError(closer, err, "Failed saving pipeline json")
+
+			log.Info().Msgf("Saved %v", targetPath)
 
 			// store builds json
 			builds, err := apiClient.GetPipelineBuilds(ctx, token, p)
 			handleError(closer, err, "Failed fetching pipeline builds")
 			builds.Pagination.TotalPages = 1
 			builds.Pagination.TotalItems = len(builds.Items)
+
+			log.Info().Msgf("Fetched %v/builds", p)
 
 			targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "builds")
 			err = os.MkdirAll(targetDir, os.ModePerm)
@@ -93,14 +101,19 @@ func main() {
 			file, err = json.MarshalIndent(builds, "", "  ")
 			handleError(closer, err, "Failed marshalling builds")
 
-			err = ioutil.WriteFile(filepath.Join(targetDir, "/GET.json"), file, 0644)
+			targetPath = filepath.Join(targetDir, "/GET.json")
+			err = ioutil.WriteFile(targetPath, file, 0644)
 			handleError(closer, err, "Failed saving builds json")
+
+			log.Info().Msgf("Saved %v", targetPath)
 
 			// store releases json
 			releases, err := apiClient.GetPipelineReleases(ctx, token, p)
 			handleError(closer, err, "Failed fetching pipeline releases")
 			releases.Pagination.TotalPages = 1
 			releases.Pagination.TotalItems = len(builds.Items)
+
+			log.Info().Msgf("Fetched %v/releases", p)
 
 			targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "releases")
 			err = os.MkdirAll(targetDir, os.ModePerm)
@@ -109,8 +122,11 @@ func main() {
 			file, err = json.MarshalIndent(releases, "", "  ")
 			handleError(closer, err, "Failed marshalling releases")
 
-			err = ioutil.WriteFile(filepath.Join(targetDir, "/GET.json"), file, 0644)
+			targetPath = filepath.Join(targetDir, "/GET.json")
+			err = ioutil.WriteFile(targetPath, file, 0644)
 			handleError(closer, err, "Failed saving releases json")
+
+			log.Info().Msgf("Saved %v", targetPath)
 		}
 	}
 
@@ -127,8 +143,11 @@ func main() {
 		file, err := json.MarshalIndent(pipelines, "", "  ")
 		handleError(closer, err, "Failed marshalling pipelines")
 
-		err = ioutil.WriteFile(filepath.Join(targetDir, "/GET.json"), file, 0644)
+		targetPath := filepath.Join(targetDir, "/GET.json")
+		err = ioutil.WriteFile(targetPath, file, 0644)
 		handleError(closer, err, "Failed saving pipelines json")
+
+		log.Info().Msgf("Saved %v", targetPath)
 	}
 }
 
