@@ -148,7 +148,11 @@ func main() {
 
 					obfuscateRelease(release)
 
-					log.Debug().Msgf("release.Events: %v", release.Events)
+					for _, e := range release.Events {
+						if e.Manual != nil {
+							log.Debug().Msgf("release.Events.Manual: %v", e.Manual)
+						}
+					}
 
 					// store release json
 					url := fmt.Sprintf("/api/pipelines/%v/releases/%v", p, release.ID)
@@ -266,12 +270,16 @@ func saveBytesToFile(path string, bytes []byte) (err error) {
 func obfuscatePipeline(pipeline *contracts.Pipeline) {
 	for i := 0; i < len(pipeline.Commits); i++ {
 		pipeline.Commits[i].Author.Email = "me@estafette.io"
+		pipeline.Commits[i].Author.Name = "Just Me"
+		pipeline.Commits[i].Author.Username = "JustMe"
 	}
 }
 
 func obfuscateBuild(build *contracts.Build) {
 	for i := 0; i < len(build.Commits); i++ {
 		build.Commits[i].Author.Email = "me@estafette.io"
+		build.Commits[i].Author.Name = "Just Me"
+		build.Commits[i].Author.Username = "JustMe"
 	}
 }
 
