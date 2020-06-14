@@ -85,9 +85,6 @@ func main() {
 			builds.Pagination.TotalPages = 1
 			builds.Pagination.TotalItems = len(builds.Items)
 
-			err = saveObjectToFile(filepath.Join("/api/pipelines", p, "builds"), builds)
-			handleError(closer, err)
-
 			// http://jmoiron.net/blog/limiting-concurrency-in-go/
 			concurrency := 10
 			semaphore := make(chan bool, concurrency)
@@ -125,14 +122,14 @@ func main() {
 				}(build)
 			}
 
+			err = saveObjectToFile(filepath.Join("/api/pipelines", p, "builds"), builds)
+			handleError(closer, err)
+
 			// store releases json
 			releases, err := apiClient.GetPipelineReleases(ctx, token, p)
 			handleError(closer, err)
 			releases.Pagination.TotalPages = 1
 			releases.Pagination.TotalItems = len(builds.Items)
-
-			err = saveObjectToFile(filepath.Join("/api/pipelines", p, "releases"), releases)
-			handleError(closer, err)
 
 			// loop releases
 			for _, release := range releases.Items {
@@ -166,6 +163,9 @@ func main() {
 					handleError(closer, err)
 				}(release)
 			}
+
+			err = saveObjectToFile(filepath.Join("/api/pipelines", p, "releases"), releases)
+			handleError(closer, err)
 
 			pipelinesSubPaths := []string{"warnings", "stats/buildsdurations", "stats/buildscpu", "stats/buildsmemory", "stats/releasesdurations", "stats/releasescpu", "stats/releasesmemory"}
 			for _, path := range pipelinesSubPaths {
