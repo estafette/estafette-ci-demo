@@ -68,8 +68,6 @@ func main() {
 		pipeline, err := apiClient.GetPipeline(ctx, token, p)
 		handleError(closer, err, "Failed fetching pipeline")
 
-		log.Info().Msgf("Fetched /api/pipelines/%v", p)
-
 		if pipeline != nil {
 			pipelines.Items = append(pipelines.Items)
 
@@ -85,15 +83,13 @@ func main() {
 			err = ioutil.WriteFile(targetPath, file, 0644)
 			handleError(closer, err, "Failed saving pipeline json")
 
-			log.Info().Msgf("Saved %v", targetPath)
+			log.Info().Msgf("/api/pipelines/%v => %v", p, targetPath)
 
 			// store builds json
 			builds, err := apiClient.GetPipelineBuilds(ctx, token, p)
 			handleError(closer, err, "Failed fetching pipeline builds")
 			builds.Pagination.TotalPages = 1
 			builds.Pagination.TotalItems = len(builds.Items)
-
-			log.Info().Msgf("Fetched /api/pipelines/%v/builds", p)
 
 			targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "builds")
 			err = os.MkdirAll(targetDir, os.ModePerm)
@@ -106,42 +102,53 @@ func main() {
 			err = ioutil.WriteFile(targetPath, file, 0644)
 			handleError(closer, err, "Failed saving builds json")
 
-			log.Info().Msgf("Saved %v", targetPath)
+			log.Info().Msgf("/api/pipelines/%v/builds => %v", p, targetPath)
+
+			// http://jmoiron.net/blog/limiting-concurrency-in-go/
+			concurrency := 10
+			semaphore := make(chan bool, concurrency)
 
 			// loop builds
 			for _, build := range builds.Items {
+				// try to fill semaphore up to it's full size otherwise wait for a routine to finish
+				semaphore <- true
 
-				// store build json
-				url := fmt.Sprintf("/api/pipelines/%v/builds/%v", p, build.ID)
+				go func(build *contracts.Build) {
+					// lower semaphore once the routine's finished, making room for another one to start
+					defer func() { <-semaphore }()
 
-				bytes, err := apiClient.GetBytesResponse(ctx, token, url)
-				handleError(closer, err, "Failed fetching bytes response")
+					// store build json
+					url := fmt.Sprintf("/api/pipelines/%v/builds/%v", p, build.ID)
 
-				log.Info().Msgf("Fetched /api/pipelines/%v/builds/%v", p, build.ID)
+					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+					handleError(closer, err, "Failed fetching bytes response")
 
-				targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "builds", build.ID)
-				err = os.MkdirAll(targetDir, os.ModePerm)
-				handleError(closer, err, "Failed creating bytes target dir")
+					targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "builds", build.ID)
+					err = os.MkdirAll(targetDir, os.ModePerm)
+					handleError(closer, err, "Failed creating bytes target dir")
 
-				targetPath := filepath.Join(targetDir, "/GET.json")
-				err = ioutil.WriteFile(targetPath, bytes, 0644)
-				handleError(closer, err, "Failed saving bytes json")
+					targetPath := filepath.Join(targetDir, "/GET.json")
+					err = ioutil.WriteFile(targetPath, bytes, 0644)
+					handleError(closer, err, "Failed saving bytes json")
 
-				// store build logs json
-				url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs", p, build.ID)
+					log.Info().Msgf("/api/pipelines/%v/builds/%v => %v", p, build.ID, targetPath)
 
-				bytes, err = apiClient.GetBytesResponse(ctx, token, url)
-				handleError(closer, err, "Failed fetching bytes response")
+					// store build logs json
+					url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs", p, build.ID)
 
-				log.Info().Msgf("Fetched /api/pipelines/%v/builds/%v/logs", p, build.ID)
+					bytes, err = apiClient.GetBytesResponse(ctx, token, url)
+					handleError(closer, err, "Failed fetching bytes response")
 
-				targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "builds", build.ID, "logs")
-				err = os.MkdirAll(targetDir, os.ModePerm)
-				handleError(closer, err, "Failed creating bytes target dir")
+					targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "builds", build.ID, "logs")
+					err = os.MkdirAll(targetDir, os.ModePerm)
+					handleError(closer, err, "Failed creating bytes target dir")
 
-				targetPath = filepath.Join(targetDir, "/GET.json")
-				err = ioutil.WriteFile(targetPath, bytes, 0644)
-				handleError(closer, err, "Failed saving bytes json")
+					targetPath = filepath.Join(targetDir, "/GET.json")
+					err = ioutil.WriteFile(targetPath, bytes, 0644)
+					handleError(closer, err, "Failed saving bytes json")
+
+					log.Info().Msgf("/api/pipelines/%v/builds/%v/logs => %v", p, build.ID, targetPath)
+				}(build)
 			}
 
 			// store releases json
@@ -149,8 +156,6 @@ func main() {
 			handleError(closer, err, "Failed fetching pipeline releases")
 			releases.Pagination.TotalPages = 1
 			releases.Pagination.TotalItems = len(builds.Items)
-
-			log.Info().Msgf("Fetched /api/pipelines/%v/releases", p)
 
 			targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "releases")
 			err = os.MkdirAll(targetDir, os.ModePerm)
@@ -163,59 +168,79 @@ func main() {
 			err = ioutil.WriteFile(targetPath, file, 0644)
 			handleError(closer, err, "Failed saving releases json")
 
-			log.Info().Msgf("Saved %v", targetPath)
+			log.Info().Msgf("/api/pipelines/%v/releases => %v", p, targetPath)
 
 			// loop releases
 			for _, release := range releases.Items {
+				// try to fill semaphore up to it's full size otherwise wait for a routine to finish
+				semaphore <- true
 
-				// store release json
-				url := fmt.Sprintf("/api/pipelines/%v/releases/%v", p, release.ID)
+				go func(release *contracts.Release) {
+					// lower semaphore once the routine's finished, making room for another one to start
+					defer func() { <-semaphore }()
 
-				bytes, err := apiClient.GetBytesResponse(ctx, token, url)
-				handleError(closer, err, "Failed fetching bytes response")
+					// store release json
+					url := fmt.Sprintf("/api/pipelines/%v/releases/%v", p, release.ID)
 
-				log.Info().Msgf("Fetched /api/pipelines/%v/releases/%v", p, release.ID)
+					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+					handleError(closer, err, "Failed fetching bytes response")
 
-				targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "releases", release.ID)
-				err = os.MkdirAll(targetDir, os.ModePerm)
-				handleError(closer, err, "Failed creating bytes target dir")
+					targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "releases", release.ID)
+					err = os.MkdirAll(targetDir, os.ModePerm)
+					handleError(closer, err, "Failed creating bytes target dir")
 
-				targetPath := filepath.Join(targetDir, "/GET.json")
-				err = ioutil.WriteFile(targetPath, bytes, 0644)
-				handleError(closer, err, "Failed saving bytes json")
+					targetPath := filepath.Join(targetDir, "/GET.json")
+					err = ioutil.WriteFile(targetPath, bytes, 0644)
+					handleError(closer, err, "Failed saving bytes json")
 
-				// store release logs json
-				url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs", p, release.ID)
+					log.Info().Msgf("/api/pipelines/%v/releases/%v => %v", p, release.ID, targetPath)
 
-				bytes, err = apiClient.GetBytesResponse(ctx, token, url)
-				handleError(closer, err, "Failed fetching bytes response")
+					// store release logs json
+					url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs", p, release.ID)
 
-				log.Info().Msgf("Fetched /api/pipelines/%v/releases/%v/logs", p, release.ID)
+					bytes, err = apiClient.GetBytesResponse(ctx, token, url)
+					handleError(closer, err, "Failed fetching bytes response")
 
-				targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "releases", release.ID, "logs")
-				err = os.MkdirAll(targetDir, os.ModePerm)
-				handleError(closer, err, "Failed creating bytes target dir")
+					targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "releases", release.ID, "logs")
+					err = os.MkdirAll(targetDir, os.ModePerm)
+					handleError(closer, err, "Failed creating bytes target dir")
 
-				targetPath = filepath.Join(targetDir, "/GET.json")
-				err = ioutil.WriteFile(targetPath, bytes, 0644)
-				handleError(closer, err, "Failed saving bytes json")
+					targetPath = filepath.Join(targetDir, "/GET.json")
+					err = ioutil.WriteFile(targetPath, bytes, 0644)
+					handleError(closer, err, "Failed saving bytes json")
+
+					log.Info().Msgf("/api/pipelines/%v/releases/%v/logs => %v", p, release.ID, targetPath)
+				}(release)
 			}
 
 			pipelinesSubPaths := []string{"warnings", "stats/buildsdurations", "stats/buildscpu", "stats/buildsmemory", "stats/releasesdurations", "stats/releasescpu", "stats/releasesmemory"}
 			for _, path := range pipelinesSubPaths {
+				// try to fill semaphore up to it's full size otherwise wait for a routine to finish
+				semaphore <- true
 
-				bytes, err := apiClient.GetBytesResponse(ctx, token, fmt.Sprintf("/api/pipelines/%v/%v", p, path))
-				handleError(closer, err, "Failed fetching bytes response")
+				go func(path string) {
+					// lower semaphore once the routine's finished, making room for another one to start
+					defer func() { <-semaphore }()
 
-				log.Info().Msgf("Fetched /api/pipelines/%v/%v", p, path)
+					bytes, err := apiClient.GetBytesResponse(ctx, token, fmt.Sprintf("/api/pipelines/%v/%v", p, path))
+					handleError(closer, err, "Failed fetching bytes response")
 
-				targetDir = filepath.Join(*saveToDirectory, "pipelines", p, path)
-				err = os.MkdirAll(targetDir, os.ModePerm)
-				handleError(closer, err, "Failed creating bytes target dir")
+					targetDir = filepath.Join(*saveToDirectory, "pipelines", p, path)
+					err = os.MkdirAll(targetDir, os.ModePerm)
+					handleError(closer, err, "Failed creating bytes target dir")
 
-				targetPath := filepath.Join(targetDir, "/GET.json")
-				err = ioutil.WriteFile(targetPath, bytes, 0644)
-				handleError(closer, err, "Failed saving bytes json")
+					targetPath := filepath.Join(targetDir, "/GET.json")
+					err = ioutil.WriteFile(targetPath, bytes, 0644)
+					handleError(closer, err, "Failed saving bytes json")
+
+					log.Info().Msgf("Saved %v", targetPath)
+					log.Info().Msgf("/api/pipelines/%v/%v => %v", p, path, targetPath)
+				}(path)
+			}
+
+			// try to fill semaphore up to it's full size which only succeeds if all routines have finished
+			for i := 0; i < cap(semaphore); i++ {
+				semaphore <- true
 			}
 		}
 	}
