@@ -188,13 +188,7 @@ func main() {
 			TotalPages: 1,
 		}
 
-		targetDir := filepath.Join("/api/pipelines")
-
-		file, err := json.MarshalIndent(pipelines, "", "  ")
-		handleError(closer, err)
-
-		targetPath := filepath.Join(targetDir, "/GET.json")
-		err = ioutil.WriteFile(targetPath, file, 0644)
+		err = saveObjectToFile("/api/pipelines", pipelines)
 		handleError(closer, err)
 	}
 }
