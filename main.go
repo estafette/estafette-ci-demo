@@ -108,6 +108,42 @@ func main() {
 
 			log.Info().Msgf("Saved %v", targetPath)
 
+			// loop builds
+			for _, build := range builds.Items {
+
+				// store build json
+				url := fmt.Sprintf("/api/pipelines/%v/builds/%v", p, build.ID)
+
+				bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+				handleError(closer, err, "Failed fetching bytes response")
+
+				log.Info().Msgf("Fetched /api/pipelines/%v/builds/%v", p, build.ID)
+
+				targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "builds", build.ID)
+				err = os.MkdirAll(targetDir, os.ModePerm)
+				handleError(closer, err, "Failed creating bytes target dir")
+
+				targetPath := filepath.Join(targetDir, "/GET.json")
+				err = ioutil.WriteFile(targetPath, bytes, 0644)
+				handleError(closer, err, "Failed saving bytes json")
+
+				// store build logs json
+				url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs", p, build.ID)
+
+				bytes, err = apiClient.GetBytesResponse(ctx, token, url)
+				handleError(closer, err, "Failed fetching bytes response")
+
+				log.Info().Msgf("Fetched /api/pipelines/%v/builds/%v/logs", p, build.ID)
+
+				targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "builds", build.ID, "logs")
+				err = os.MkdirAll(targetDir, os.ModePerm)
+				handleError(closer, err, "Failed creating bytes target dir")
+
+				targetPath = filepath.Join(targetDir, "/GET.json")
+				err = ioutil.WriteFile(targetPath, bytes, 0644)
+				handleError(closer, err, "Failed saving bytes json")
+			}
+
 			// store releases json
 			releases, err := apiClient.GetPipelineReleases(ctx, token, p)
 			handleError(closer, err, "Failed fetching pipeline releases")
@@ -129,7 +165,43 @@ func main() {
 
 			log.Info().Msgf("Saved %v", targetPath)
 
-			pipelinesSubPaths := []string{"warnings", "buildsdurations", "buildscpu", "buildsmemory", "releasesdurations", "releasescpu", "releasesmemory"}
+			// loop releases
+			for _, release := range releases.Items {
+
+				// store release json
+				url := fmt.Sprintf("/api/pipelines/%v/releases/%v", p, release.ID)
+
+				bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+				handleError(closer, err, "Failed fetching bytes response")
+
+				log.Info().Msgf("Fetched /api/pipelines/%v/releases/%v", p, release.ID)
+
+				targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "releases", release.ID)
+				err = os.MkdirAll(targetDir, os.ModePerm)
+				handleError(closer, err, "Failed creating bytes target dir")
+
+				targetPath := filepath.Join(targetDir, "/GET.json")
+				err = ioutil.WriteFile(targetPath, bytes, 0644)
+				handleError(closer, err, "Failed saving bytes json")
+
+				// store release logs json
+				url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs", p, release.ID)
+
+				bytes, err = apiClient.GetBytesResponse(ctx, token, url)
+				handleError(closer, err, "Failed fetching bytes response")
+
+				log.Info().Msgf("Fetched /api/pipelines/%v/releases/%v/logs", p, release.ID)
+
+				targetDir = filepath.Join(*saveToDirectory, "pipelines", p, "releases", release.ID, "logs")
+				err = os.MkdirAll(targetDir, os.ModePerm)
+				handleError(closer, err, "Failed creating bytes target dir")
+
+				targetPath = filepath.Join(targetDir, "/GET.json")
+				err = ioutil.WriteFile(targetPath, bytes, 0644)
+				handleError(closer, err, "Failed saving bytes json")
+			}
+
+			pipelinesSubPaths := []string{"warnings", "stats/buildsdurations", "stats/buildscpu", "stats/buildsmemory", "stats/releasesdurations", "stats/releasescpu", "stats/releasesmemory"}
 			for _, path := range pipelinesSubPaths {
 
 				bytes, err := apiClient.GetBytesResponse(ctx, token, fmt.Sprintf("/api/pipelines/%v/%v", p, path))
