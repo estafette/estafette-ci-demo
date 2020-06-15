@@ -293,7 +293,14 @@ func (c *apiClient) GetSSEResponse(ctx context.Context, token string, path strin
 	for i := 0; i < maxNumberOfEvents; i++ {
 		select {
 		case msg := <-events:
+
+			// add line with event type (event:log)
+			bytes = append(bytes, []byte(fmt.Sprintf("event:%v\n", msg.Event))...)
+
+			// add line with data (data:true)
+			bytes = append(bytes, []byte("data:")...)
 			bytes = append(bytes, msg.Data...)
+			bytes = append(bytes, []byte("\n\n")...)
 		case <-time.After(time.Second * 5):
 			return bytes, nil
 		}
