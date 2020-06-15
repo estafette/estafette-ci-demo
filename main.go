@@ -116,16 +116,29 @@ func main() {
 					err = saveObjectToFile(url, build)
 					handleError(closer, err)
 
-					// store build logs json
-					url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs", p, b.ID)
+					if b.BuildStatus == "pending" || b.BuildStatus == "running" {
+						// store build logs stream json
+						url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs.stream", p, b.ID)
 
-					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
-					handleError(closer, err)
+						bytes, err := apiClient.GetSSEResponse(ctx, token, url, 200)
+						handleError(closer, err)
 
-					bytes = obfuscateLog(bytes)
+						bytes = obfuscateLog(bytes)
 
-					err = saveBytesToFile(url, bytes)
-					handleError(closer, err)
+						err = saveBytesToFile(url, bytes)
+						handleError(closer, err)
+					} else {
+						// store build logs json
+						url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs", p, b.ID)
+
+						bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+						handleError(closer, err)
+
+						bytes = obfuscateLog(bytes)
+
+						err = saveBytesToFile(url, bytes)
+						handleError(closer, err)
+					}
 				}(b)
 			}
 
@@ -162,16 +175,30 @@ func main() {
 					err = saveObjectToFile(url, release)
 					handleError(closer, err)
 
-					// store release logs json
-					url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs", p, r.ID)
+					if r.ReleaseStatus == "pending" || r.ReleaseStatus == "running" {
+						// store build logs stream json
+						url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs.stream", p, r.ID)
 
-					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
-					handleError(closer, err)
+						bytes, err := apiClient.GetSSEResponse(ctx, token, url, 200)
+						handleError(closer, err)
 
-					bytes = obfuscateLog(bytes)
+						bytes = obfuscateLog(bytes)
 
-					err = saveBytesToFile(url, bytes)
-					handleError(closer, err)
+						err = saveBytesToFile(url, bytes)
+						handleError(closer, err)
+					} else {
+
+						// store release logs json
+						url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs", p, r.ID)
+
+						bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+						handleError(closer, err)
+
+						bytes = obfuscateLog(bytes)
+
+						err = saveBytesToFile(url, bytes)
+						handleError(closer, err)
+					}
 				}(r)
 			}
 

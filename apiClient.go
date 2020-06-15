@@ -14,6 +14,7 @@ import (
 	foundation "github.com/estafette/estafette-foundation"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/opentracing/opentracing-go"
+	"github.com/r3labs/sse"
 	"github.com/rs/zerolog/log"
 	"github.com/sethgrid/pester"
 )
@@ -30,6 +31,7 @@ type ApiClient interface {
 	GetPipelineReleases(ctx context.Context, token string, pipelinePath string) (response PipelineReleasesListResponse, err error)
 	GetPipelineRelease(ctx context.Context, token string, pipelineReleasePath string) (release *contracts.Release, err error)
 	GetBytesResponse(ctx context.Context, token string, path string) (bytes []byte, err error)
+	GetSSEResponse(ctx context.Context, token string, path string, maxNumberOfEvents int) (bytes []byte, err error)
 }
 
 // NewApiClient returns a new ApiClient
@@ -262,6 +264,39 @@ func (c *apiClient) GetBytesResponse(ctx context.Context, token string, path str
 	bytes, err = c.getRequest(url, span, nil, headers)
 	if err != nil {
 		return
+	}
+
+	return bytes, nil
+}
+
+func (c *apiClient) GetSSEResponse(ctx context.Context, token string, path string, maxNumberOfEvents int) (bytes []byte, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetSSEResponse")
+	defer span.Finish()
+
+	url := fmt.Sprintf("%v%v", c.apiBaseURL, path)
+
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %v", token),
+		"Content-Type":  "application/json",
+	}
+
+	client := sse.NewClient(url)
+	client.Headers = headers
+
+	events := make(chan *sse.Event)
+	err = client.SubscribeChan("log", events)
+	if err != nil {
+		return bytes, err
+	}
+	defer client.Unsubscribe(events)
+
+	for i := 0; i < maxNumberOfEvents; i++ {
+		select {
+		case msg := <-events:
+			bytes = append(bytes, msg.Data...)
+		case <-time.After(time.Second * 5):
+			return bytes, nil
+		}
 	}
 
 	return bytes, nil
