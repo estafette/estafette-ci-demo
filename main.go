@@ -136,7 +136,7 @@ func main() {
 
 						bytes = obfuscateLog(bytes)
 
-						err = saveBytesToFile(url, bytes)
+						err = saveSSEBytesToFile(url, bytes)
 						handleError(closer, err)
 					} else {
 						// store build logs json
@@ -195,7 +195,7 @@ func main() {
 
 						bytes = obfuscateLog(bytes)
 
-						err = saveBytesToFile(url, bytes)
+						err = saveSSEBytesToFile(url, bytes)
 						handleError(closer, err)
 					} else {
 
