@@ -89,30 +89,35 @@ func main() {
 			concurrency := 10
 			semaphore := make(chan bool, concurrency)
 
+			for _, b := range builds.Items {
+				obfuscateBuild(b)
+			}
+
+			err = saveObjectToFile(filepath.Join("/api/pipelines", p, "builds"), builds)
+			handleError(closer, err)
+
 			// loop builds
-			for _, build := range builds.Items {
+			for _, b := range builds.Items {
 				// try to fill semaphore up to it's full size otherwise wait for a routine to finish
 				semaphore <- true
 
-				go func(build *contracts.Build) {
+				go func(b *contracts.Build) {
 					// lower semaphore once the routine's finished, making room for another one to start
 					defer func() { <-semaphore }()
 
-					obfuscateBuild(build)
-
 					// store build json
-					url := fmt.Sprintf("/api/pipelines/%v/builds/%v", p, build.ID)
+					url := fmt.Sprintf("/api/pipelines/%v/builds/%v", p, b.ID)
 
-					singleBuild, err := apiClient.GetPipelineBuild(ctx, token, url)
+					build, err := apiClient.GetPipelineBuild(ctx, token, url)
 					handleError(closer, err)
 
-					obfuscateBuild(singleBuild)
+					obfuscateBuild(build)
 
-					err = saveObjectToFile(url, singleBuild)
+					err = saveObjectToFile(url, build)
 					handleError(closer, err)
 
 					// store build logs json
-					url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs", p, build.ID)
+					url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs", p, b.ID)
 
 					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
 					handleError(closer, err)
@@ -121,11 +126,8 @@ func main() {
 
 					err = saveBytesToFile(url, bytes)
 					handleError(closer, err)
-				}(build)
+				}(b)
 			}
-
-			err = saveObjectToFile(filepath.Join("/api/pipelines", p, "builds"), builds)
-			handleError(closer, err)
 
 			// store releases json
 			releases, err := apiClient.GetPipelineReleases(ctx, token, p)
@@ -133,30 +135,35 @@ func main() {
 			releases.Pagination.TotalPages = 1
 			releases.Pagination.TotalItems = len(builds.Items)
 
+			for _, r := range releases.Items {
+				obfuscateRelease(r)
+			}
+
+			err = saveObjectToFile(filepath.Join("/api/pipelines", p, "releases"), releases)
+			handleError(closer, err)
+
 			// loop releases
-			for _, release := range releases.Items {
+			for _, r := range releases.Items {
 				// try to fill semaphore up to it's full size otherwise wait for a routine to finish
 				semaphore <- true
 
-				go func(release *contracts.Release) {
+				go func(r *contracts.Release) {
 					// lower semaphore once the routine's finished, making room for another one to start
 					defer func() { <-semaphore }()
 
-					obfuscateRelease(release)
-
 					// store release json
-					url := fmt.Sprintf("/api/pipelines/%v/releases/%v", p, release.ID)
+					url := fmt.Sprintf("/api/pipelines/%v/releases/%v", p, r.ID)
 
-					singleRelease, err := apiClient.GetPipelineRelease(ctx, token, url)
+					release, err := apiClient.GetPipelineRelease(ctx, token, url)
 					handleError(closer, err)
 
-					obfuscateRelease(singleRelease)
+					obfuscateRelease(release)
 
-					err = saveObjectToFile(url, singleRelease)
+					err = saveObjectToFile(url, release)
 					handleError(closer, err)
 
 					// store release logs json
-					url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs", p, release.ID)
+					url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs", p, r.ID)
 
 					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
 					handleError(closer, err)
@@ -165,11 +172,8 @@ func main() {
 
 					err = saveBytesToFile(url, bytes)
 					handleError(closer, err)
-				}(release)
+				}(r)
 			}
-
-			err = saveObjectToFile(filepath.Join("/api/pipelines", p, "releases"), releases)
-			handleError(closer, err)
 
 			pipelinesSubPaths := []string{"warnings", "stats/buildsdurations", "stats/buildscpu", "stats/buildsmemory", "stats/releasesdurations", "stats/releasescpu", "stats/releasesmemory"}
 			for _, path := range pipelinesSubPaths {
