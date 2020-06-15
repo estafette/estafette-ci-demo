@@ -116,6 +116,17 @@ func main() {
 					err = saveObjectToFile(url, build)
 					handleError(closer, err)
 
+					// store build warnings json
+					url = fmt.Sprintf("/api/pipelines/%v/builds/%v/warnings", p, b.ID)
+
+					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+					handleError(closer, err)
+
+					bytes = obfuscateLog(bytes)
+
+					err = saveBytesToFile(url, bytes)
+					handleError(closer, err)
+
 					if b.BuildStatus == "pending" || b.BuildStatus == "running" {
 						// store build logs stream json
 						url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs.stream", p, b.ID)
@@ -282,8 +293,19 @@ func saveBytesToFile(path string, bytes []byte) (err error) {
 		return
 	}
 
-	targetPath := filepath.Join(targetDir, "/GET.json")
+	targetPath := filepath.Join(targetDir, "/index.json")
 	err = ioutil.WriteFile(targetPath, bytes, 0644)
+	if err != nil {
+		return
+	}
+
+	// copy GET.js to target dir
+	input, err := ioutil.ReadFile("./GET.js")
+	if err != nil {
+		return
+	}
+
+	err = ioutil.WriteFile(filepath.Join(targetDir, "/GET.js"), input, 0644)
 	if err != nil {
 		return
 	}
