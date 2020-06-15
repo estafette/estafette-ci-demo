@@ -290,6 +290,16 @@ func obfuscateBuild(build *contracts.Build) {
 		build.Commits[i].Author.Name = "Just Me"
 		build.Commits[i].Author.Username = "JustMe"
 	}
+
+	for i := 0; i < len(build.ReleaseTargets); i++ {
+		for j := 0; j < len(build.ReleaseTargets[i].ActiveReleases); j++ {
+			for k := 0; k < len(build.ReleaseTargets[i].ActiveReleases[j].Events); k++ {
+				if build.ReleaseTargets[i].ActiveReleases[j].Events[k].Manual != nil {
+					build.ReleaseTargets[i].ActiveReleases[j].Events[k].Manual.UserID = "me@estafette.io"
+				}
+			}
+		}
+	}
 }
 
 func obfuscateRelease(release *contracts.Release) {
