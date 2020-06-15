@@ -282,6 +282,12 @@ func obfuscatePipeline(pipeline *contracts.Pipeline) {
 			}
 		}
 	}
+
+	for i := 0; i < len(pipeline.Events); i++ {
+		if pipeline.Events[i].Manual != nil {
+			pipeline.Events[i].Manual.UserID = "me@estafette.io"
+		}
+	}
 }
 
 func obfuscateBuild(build *contracts.Build) {
@@ -298,6 +304,12 @@ func obfuscateBuild(build *contracts.Build) {
 					build.ReleaseTargets[i].ActiveReleases[j].Events[k].Manual.UserID = "me@estafette.io"
 				}
 			}
+		}
+	}
+
+	for i := 0; i < len(build.Events); i++ {
+		if build.Events[i].Manual != nil {
+			build.Events[i].Manual.UserID = "me@estafette.io"
 		}
 	}
 }
