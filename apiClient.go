@@ -295,7 +295,9 @@ func (c *apiClient) GetSSEResponse(ctx context.Context, token string, path strin
 		case msg := <-events:
 
 			// add line with event type (event:log)
-			bytes = append(bytes, []byte(fmt.Sprintf("event:%v\n", msg.Event))...)
+			bytes = append(bytes, []byte("event:")...)
+			bytes = append(bytes, msg.Event...)
+			bytes = append(bytes, []byte("\n")...)
 
 			// add line with data (data:true)
 			bytes = append(bytes, []byte("data:")...)
