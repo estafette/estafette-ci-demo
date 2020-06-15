@@ -284,7 +284,7 @@ func (c *apiClient) GetSSEResponse(ctx context.Context, token string, path strin
 	client.Headers = headers
 
 	events := make(chan *sse.Event)
-	err = client.SubscribeChan("log", events)
+	err = client.SubscribeChanRaw(events)
 	if err != nil {
 		return bytes, err
 	}

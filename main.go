@@ -127,7 +127,7 @@ func main() {
 					err = saveBytesToFile(url, bytes)
 					handleError(closer, err)
 
-					if b.BuildStatus == "pending" || b.BuildStatus == "running" {
+					if b.BuildStatus == "pending" || b.BuildStatus == "running" || b.BuildStatus == "canceling" {
 						// store build logs stream json
 						url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs.stream", p, b.ID)
 
@@ -186,7 +186,7 @@ func main() {
 					err = saveObjectToFile(url, release)
 					handleError(closer, err)
 
-					if r.ReleaseStatus == "pending" || r.ReleaseStatus == "running" {
+					if r.ReleaseStatus == "pending" || r.ReleaseStatus == "running" || r.ReleaseStatus == "canceling" {
 						// store build logs stream json
 						url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs.stream", p, r.ID)
 
@@ -301,6 +301,35 @@ func saveBytesToFile(path string, bytes []byte) (err error) {
 
 	// copy GET.js to target dir
 	input, err := ioutil.ReadFile("./GET.js")
+	if err != nil {
+		return
+	}
+
+	err = ioutil.WriteFile(filepath.Join(targetDir, "/GET.js"), input, 0644)
+	if err != nil {
+		return
+	}
+
+	log.Info().Msgf("Fetched and saved %v", path)
+
+	return nil
+}
+
+func saveSSEBytesToFile(path string, bytes []byte) (err error) {
+	targetDir := filepath.Join(*saveToDirectory, path)
+	err = os.MkdirAll(targetDir, os.ModePerm)
+	if err != nil {
+		return
+	}
+
+	targetPath := filepath.Join(targetDir, "/index.json")
+	err = ioutil.WriteFile(targetPath, bytes, 0644)
+	if err != nil {
+		return
+	}
+
+	// copy GET.js to target dir
+	input, err := ioutil.ReadFile("./GET-sse.js")
 	if err != nil {
 		return
 	}
