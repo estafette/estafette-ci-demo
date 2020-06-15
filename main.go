@@ -103,16 +103,18 @@ func main() {
 					// store build json
 					url := fmt.Sprintf("/api/pipelines/%v/builds/%v", p, build.ID)
 
-					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+					singleBuild, err := apiClient.GetPipelineBuild(ctx, token, url)
 					handleError(closer, err)
 
-					err = saveBytesToFile(url, bytes)
+					obfuscateBuild(singleBuild)
+
+					err = saveObjectToFile(url, singleBuild)
 					handleError(closer, err)
 
 					// store build logs json
 					url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs", p, build.ID)
 
-					bytes, err = apiClient.GetBytesResponse(ctx, token, url)
+					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
 					handleError(closer, err)
 
 					bytes = obfuscateLog(bytes)
@@ -145,16 +147,18 @@ func main() {
 					// store release json
 					url := fmt.Sprintf("/api/pipelines/%v/releases/%v", p, release.ID)
 
-					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+					singleRelease, err := apiClient.GetPipelineRelease(ctx, token, url)
 					handleError(closer, err)
 
-					err = saveBytesToFile(url, bytes)
+					obfuscateRelease(singleRelease)
+
+					err = saveObjectToFile(url, singleRelease)
 					handleError(closer, err)
 
 					// store release logs json
 					url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs", p, release.ID)
 
-					bytes, err = apiClient.GetBytesResponse(ctx, token, url)
+					bytes, err := apiClient.GetBytesResponse(ctx, token, url)
 					handleError(closer, err)
 
 					bytes = obfuscateLog(bytes)

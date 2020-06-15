@@ -26,7 +26,9 @@ type ApiClient interface {
 	GetPipelines(ctx context.Context, token string, pageNumber, pageSize int, filters map[string][]string) (response PipelinesListResponse, err error)
 	GetPipeline(ctx context.Context, token string, pipelinePath string) (pipeline *contracts.Pipeline, err error)
 	GetPipelineBuilds(ctx context.Context, token string, pipelinePath string) (response PipelineBuildsListResponse, err error)
+	GetPipelineBuild(ctx context.Context, token string, pipelineBuildPath string) (build *contracts.Build, err error)
 	GetPipelineReleases(ctx context.Context, token string, pipelinePath string) (response PipelineReleasesListResponse, err error)
+	GetPipelineRelease(ctx context.Context, token string, pipelineReleasePath string) (release *contracts.Release, err error)
 	GetBytesResponse(ctx context.Context, token string, path string) (bytes []byte, err error)
 }
 
@@ -165,6 +167,32 @@ func (c *apiClient) GetPipelineBuilds(ctx context.Context, token string, pipelin
 	return response, nil
 }
 
+func (c *apiClient) GetPipelineBuild(ctx context.Context, token string, pipelineBuildPath string) (build *contracts.Build, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineBuild")
+	defer span.Finish()
+
+	getPipelineBuildURL := fmt.Sprintf("%v%v", c.apiBaseURL, pipelineBuildPath)
+
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %v", token),
+		"Content-Type":  "application/json",
+	}
+
+	responseBody, err := c.getRequest(getPipelineBuildURL, span, nil, headers)
+	if err != nil {
+		return
+	}
+
+	// unmarshal json body
+	err = json.Unmarshal(responseBody, &build)
+	if err != nil {
+		log.Error().Err(err).Str("body", string(responseBody)).Msgf("Failed unmarshalling get pipeline build response from %v", getPipelineBuildURL)
+		return
+	}
+
+	return build, nil
+}
+
 func (c *apiClient) GetPipelineReleases(ctx context.Context, token string, pipelinePath string) (response PipelineReleasesListResponse, err error) {
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineReleases")
@@ -190,6 +218,33 @@ func (c *apiClient) GetPipelineReleases(ctx context.Context, token string, pipel
 	}
 
 	return response, nil
+}
+
+func (c *apiClient) GetPipelineRelease(ctx context.Context, token string, pipelineReleasePath string) (release *contracts.Release, err error) {
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineRelease")
+	defer span.Finish()
+
+	getPipelineReleaseURL := fmt.Sprintf("%v%v", c.apiBaseURL, pipelineReleasePath)
+
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %v", token),
+		"Content-Type":  "application/json",
+	}
+
+	responseBody, err := c.getRequest(getPipelineReleaseURL, span, nil, headers)
+	if err != nil {
+		return
+	}
+
+	// unmarshal json body
+	err = json.Unmarshal(responseBody, &release)
+	if err != nil {
+		log.Error().Err(err).Str("body", string(responseBody)).Msgf("Failed unmarshalling get pipeline release response from %v", getPipelineReleaseURL)
+		return
+	}
+
+	return release, nil
 }
 
 func (c *apiClient) GetBytesResponse(ctx context.Context, token string, path string) (bytes []byte, err error) {
