@@ -10,7 +10,7 @@ version:
 
 stages:
   build:
-    image: golang:1.15.2-alpine3.12
+    image: golang:1.16-alpine
     env:
       CGO_ENABLED: 0
       GOOS: linux
@@ -22,7 +22,7 @@ stages:
     - go build -a -installsuffix cgo -ldflags "-X main.appgroup=${ESTAFETTE_LABEL_APP_GROUP} -X main.app=${ESTAFETTE_GIT_NAME} -X main.version=${ESTAFETTE_BUILD_VERSION} -X main.revision=${ESTAFETTE_GIT_REVISION} -X main.branch=${ESTAFETTE_GIT_BRANCH} -X main.buildDate=${ESTAFETTE_BUILD_DATETIME}" -o ./${ESTAFETTE_GIT_NAME} .
 
   extract-data:
-    image: golang:1.15.2-alpine3.12
+    image: golang:1.16-alpine
     env:
       CGO_ENABLED: 0
       GOOS: linux
@@ -41,7 +41,7 @@ stages:
     branch: main
 
   copy-mock-data:
-    image: golang:1.15.2-alpine3.12
+    image: golang:1.16-alpine
     env:
       GIT_USER_EMAIL: estafette.secret(0ZJRd1ti_4HlsYz6.ie7ynUsbOMTuDEkvBdvDAmB1UL9Hu0YmxTpEve2ARAE_wTonhpe65Ek=)
       GIT_USER_NAME: estafette.secret(nbg9Avv8R7CoZ1O4.GDU-1JwnPpzaBsDcjJhX4CyRhspe4amlBflh3OQoPQ==)
