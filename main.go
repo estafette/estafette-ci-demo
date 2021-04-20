@@ -149,7 +149,7 @@ func main() {
 
 						for _, bl := range buildLogs.Items {
 							// store build logs json
-							url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs/%v", p, b.ID, bl.ID)
+							url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logsbyid/%v", p, b.ID, bl.ID)
 
 							bytes, err := apiClient.GetBytesResponse(ctx, token, url)
 							handleError(closer, err)
@@ -218,7 +218,7 @@ func main() {
 
 						for _, rl := range releaseLogs.Items {
 							// store release logs json
-							url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs/%v", p, r.ID, rl.ID)
+							url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logsbyid/%v", p, r.ID, rl.ID)
 
 							bytes, err := apiClient.GetBytesResponse(ctx, token, url)
 							handleError(closer, err)
