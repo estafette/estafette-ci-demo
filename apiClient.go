@@ -28,10 +28,10 @@ type ApiClient interface {
 	GetPipeline(ctx context.Context, token string, pipelinePath string) (pipeline *contracts.Pipeline, err error)
 	GetPipelineBuilds(ctx context.Context, token string, pipelinePath string) (response PipelineBuildsListResponse, err error)
 	GetPipelineBuild(ctx context.Context, token string, pipelineBuildPath string) (build *contracts.Build, err error)
-	GetPipelineBuildLogs(ctx context.Context, token string, pipelineBuildPath string) (buildLogs []*contracts.BuildLog, err error)
+	GetPipelineBuildLogs(ctx context.Context, token string, pipelineBuildPath string) (buildLogs PipelineBuildsLogsListResponse, err error)
 	GetPipelineReleases(ctx context.Context, token string, pipelinePath string) (response PipelineReleasesListResponse, err error)
 	GetPipelineRelease(ctx context.Context, token string, pipelineReleasePath string) (release *contracts.Release, err error)
-	GetPipelineReleaseLogs(ctx context.Context, token string, pipelineReleasePath string) (releaseLogs []*contracts.ReleaseLog, err error)
+	GetPipelineReleaseLogs(ctx context.Context, token string, pipelineReleasePath string) (releaseLogs PipelineReleasesLogsListResponse, err error)
 	GetBytesResponse(ctx context.Context, token string, path string) (bytes []byte, err error)
 	GetSSEResponse(ctx context.Context, token string, path string, maxNumberOfEvents int) (bytes []byte, err error)
 }
@@ -197,7 +197,7 @@ func (c *apiClient) GetPipelineBuild(ctx context.Context, token string, pipeline
 	return build, nil
 }
 
-func (c *apiClient) GetPipelineBuildLogs(ctx context.Context, token string, pipelineBuildPath string) (buildLogs []*contracts.BuildLog, err error) {
+func (c *apiClient) GetPipelineBuildLogs(ctx context.Context, token string, pipelineBuildPath string) (buildLogs PipelineBuildsLogsListResponse, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineBuild")
 	defer span.Finish()
 
@@ -277,7 +277,7 @@ func (c *apiClient) GetPipelineRelease(ctx context.Context, token string, pipeli
 	return release, nil
 }
 
-func (c *apiClient) GetPipelineReleaseLogs(ctx context.Context, token string, pipelineReleasePath string) (releaseLogs []*contracts.ReleaseLog, err error) {
+func (c *apiClient) GetPipelineReleaseLogs(ctx context.Context, token string, pipelineReleasePath string) (releaseLogs PipelineReleasesLogsListResponse, err error) {
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineRelease")
 	defer span.Finish()

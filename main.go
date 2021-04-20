@@ -147,7 +147,7 @@ func main() {
 						err = saveObjectToFile(url, buildLogs)
 						handleError(closer, err)
 
-						for _, bl := range buildLogs {
+						for _, bl := range buildLogs.Items {
 							// store build logs json
 							url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs/%v", p, b.ID, bl.ID)
 
@@ -216,7 +216,7 @@ func main() {
 						err = saveObjectToFile(url, releaseLogs)
 						handleError(closer, err)
 
-						for _, rl := range releaseLogs {
+						for _, rl := range releaseLogs.Items {
 							// store release logs json
 							url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs/%v", p, r.ID, rl.ID)
 

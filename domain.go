@@ -18,3 +18,13 @@ type PipelineReleasesListResponse struct {
 	Items      []*contracts.Release `json:"items"`
 	Pagination contracts.Pagination `json:"pagination"`
 }
+
+type PipelineBuildsLogsListResponse struct {
+	Items      []*contracts.BuildLog `json:"items"`
+	Pagination contracts.Pagination  `json:"pagination"`
+}
+
+type PipelineReleasesLogsListResponse struct {
+	Items      []*contracts.ReleaseLog `json:"items"`
+	Pagination contracts.Pagination    `json:"pagination"`
+}
