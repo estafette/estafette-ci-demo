@@ -127,6 +127,14 @@ func main() {
 					err = saveBytesToFile(url, bytes)
 					handleError(closer, err)
 
+					// store logs index
+					url = fmt.Sprintf("/api/pipelines/%v/builds/%v/alllogs", p, b.ID)
+					buildLogs, err := apiClient.GetPipelineBuildLogs(ctx, token, url)
+					handleError(closer, err)
+
+					err = saveObjectToFile(url, buildLogs)
+					handleError(closer, err)
+
 					if b.BuildStatus == "pending" || b.BuildStatus == "running" || b.BuildStatus == "canceling" {
 						// store build logs stream json
 						url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs.stream", p, b.ID)
@@ -139,14 +147,6 @@ func main() {
 						err = saveSSEBytesToFile(url, bytes)
 						handleError(closer, err)
 					} else {
-						// store all logs
-						url = fmt.Sprintf("/api/pipelines/%v/builds/%v/alllogs", p, b.ID)
-						buildLogs, err := apiClient.GetPipelineBuildLogs(ctx, token, url)
-						handleError(closer, err)
-
-						err = saveObjectToFile(url, buildLogs)
-						handleError(closer, err)
-
 						for _, bl := range buildLogs.Items {
 							// store build logs json
 							url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logsbyid/%v", p, b.ID, bl.ID)
@@ -196,6 +196,14 @@ func main() {
 					err = saveObjectToFile(url, release)
 					handleError(closer, err)
 
+					// store logs index
+					url = fmt.Sprintf("/api/pipelines/%v/releases/%v/alllogs", p, r.ID)
+					releaseLogs, err := apiClient.GetPipelineReleaseLogs(ctx, token, url)
+					handleError(closer, err)
+
+					err = saveObjectToFile(url, releaseLogs)
+					handleError(closer, err)
+
 					if r.ReleaseStatus == "pending" || r.ReleaseStatus == "running" || r.ReleaseStatus == "canceling" {
 						// store build logs stream json
 						url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs.stream", p, r.ID)
@@ -208,14 +216,6 @@ func main() {
 						err = saveSSEBytesToFile(url, bytes)
 						handleError(closer, err)
 					} else {
-						// store all logs
-						url = fmt.Sprintf("/api/pipelines/%v/releases/%v/alllogs", p, r.ID)
-						releaseLogs, err := apiClient.GetPipelineReleaseLogs(ctx, token, url)
-						handleError(closer, err)
-
-						err = saveObjectToFile(url, releaseLogs)
-						handleError(closer, err)
-
 						for _, rl := range releaseLogs.Items {
 							// store release logs json
 							url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logsbyid/%v", p, r.ID, rl.ID)
