@@ -139,16 +139,26 @@ func main() {
 						err = saveSSEBytesToFile(url, bytes)
 						handleError(closer, err)
 					} else {
-						// store build logs json
-						url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs", p, b.ID)
-
-						bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+						// store all logs
+						url = fmt.Sprintf("/api/pipelines/%v/builds/%v/alllogs", p, b.ID)
+						buildLogs, err := apiClient.GetPipelineBuildLogs(ctx, token, url)
 						handleError(closer, err)
 
-						bytes = obfuscateLog(bytes)
-
-						err = saveBytesToFile(url, bytes)
+						err = saveObjectToFile(url, buildLogs)
 						handleError(closer, err)
+
+						for _, bl := range buildLogs {
+							// store build logs json
+							url = fmt.Sprintf("/api/pipelines/%v/builds/%v/logs/%v", p, b.ID, bl.ID)
+
+							bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+							handleError(closer, err)
+
+							bytes = obfuscateLog(bytes)
+
+							err = saveBytesToFile(url, bytes)
+							handleError(closer, err)
+						}
 					}
 				}(b)
 			}
@@ -198,17 +208,26 @@ func main() {
 						err = saveSSEBytesToFile(url, bytes)
 						handleError(closer, err)
 					} else {
-
-						// store release logs json
-						url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs", p, r.ID)
-
-						bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+						// store all logs
+						url = fmt.Sprintf("/api/pipelines/%v/releases/%v/alllogs", p, r.ID)
+						releaseLogs, err := apiClient.GetPipelineReleaseLogs(ctx, token, url)
 						handleError(closer, err)
 
-						bytes = obfuscateLog(bytes)
-
-						err = saveBytesToFile(url, bytes)
+						err = saveObjectToFile(url, releaseLogs)
 						handleError(closer, err)
+
+						for _, rl := range releaseLogs {
+							// store release logs json
+							url = fmt.Sprintf("/api/pipelines/%v/releases/%v/logs/%v", p, r.ID, rl.ID)
+
+							bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+							handleError(closer, err)
+
+							bytes = obfuscateLog(bytes)
+
+							err = saveBytesToFile(url, bytes)
+							handleError(closer, err)
+						}
 					}
 				}(r)
 			}
