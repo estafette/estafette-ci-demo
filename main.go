@@ -232,7 +232,76 @@ func main() {
 				}(r)
 			}
 
-			pipelinesSubPaths := []string{"warnings", "stats/buildsdurations", "stats/buildscpu", "stats/buildsmemory", "stats/releasesdurations", "stats/releasescpu", "stats/releasesmemory"}
+			// store bots json
+			bots, err := apiClient.GetPipelineBots(ctx, token, p)
+			handleError(closer, err)
+			bots.Pagination.TotalPages = 1
+			bots.Pagination.TotalItems = len(builds.Items)
+
+			for _, r := range releases.Items {
+				obfuscateRelease(r)
+			}
+
+			err = saveObjectToFile(filepath.Join("/api/pipelines", p, "bots"), bots)
+			handleError(closer, err)
+
+			// loop bots
+			for _, b := range bots.Items {
+				// try to fill semaphore up to it's full size otherwise wait for a routine to finish
+				semaphore <- true
+
+				go func(b *contracts.Bot) {
+					// lower semaphore once the routine's finished, making room for another one to start
+					defer func() { <-semaphore }()
+
+					// store build json
+					url := fmt.Sprintf("/api/pipelines/%v/bots/%v", p, b.ID)
+
+					bot, err := apiClient.GetPipelineBot(ctx, token, url)
+					handleError(closer, err)
+
+					obfuscateBot(bot)
+
+					err = saveObjectToFile(url, bot)
+					handleError(closer, err)
+
+					// store logs index
+					url = fmt.Sprintf("/api/pipelines/%v/bots/%v/alllogs", p, b.ID)
+					botLogs, err := apiClient.GetPipelineBotLogs(ctx, token, url)
+					handleError(closer, err)
+
+					err = saveObjectToFile(url, botLogs)
+					handleError(closer, err)
+
+					if b.BotStatus == "pending" || b.BotStatus == "running" || b.BotStatus == "canceling" {
+						// store bot logs stream json
+						url = fmt.Sprintf("/api/pipelines/%v/bots/%v/logs.stream", p, b.ID)
+
+						bytes, err := apiClient.GetSSEResponse(ctx, token, url, 200)
+						handleError(closer, err)
+
+						bytes = obfuscateLog(bytes)
+
+						err = saveSSEBytesToFile(url, bytes)
+						handleError(closer, err)
+					} else {
+						for _, bl := range botLogs.Items {
+							// store build logs json
+							url = fmt.Sprintf("/api/pipelines/%v/bots/%v/logsbyid/%v", p, b.ID, bl.ID)
+
+							bytes, err := apiClient.GetBytesResponse(ctx, token, url)
+							handleError(closer, err)
+
+							bytes = obfuscateLog(bytes)
+
+							err = saveBytesToFile(url, bytes)
+							handleError(closer, err)
+						}
+					}
+				}(b)
+			}
+
+			pipelinesSubPaths := []string{"buildbranches", "botnames", "warnings", "stats/buildsdurations", "stats/buildscpu", "stats/buildsmemory", "stats/releasesdurations", "stats/releasescpu", "stats/releasesmemory"}
 			for _, path := range pipelinesSubPaths {
 				// try to fill semaphore up to it's full size otherwise wait for a routine to finish
 				semaphore <- true
@@ -415,6 +484,14 @@ func obfuscateRelease(release *contracts.Release) {
 	for i := 0; i < len(release.Events); i++ {
 		if release.Events[i].Manual != nil {
 			release.Events[i].Manual.UserID = "me@estafette.io"
+		}
+	}
+}
+
+func obfuscateBot(bot *contracts.Bot) {
+	for i := 0; i < len(bot.Events); i++ {
+		if bot.Events[i].Manual != nil {
+			bot.Events[i].Manual.UserID = "me@estafette.io"
 		}
 	}
 }

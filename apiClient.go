@@ -32,6 +32,9 @@ type ApiClient interface {
 	GetPipelineReleases(ctx context.Context, token string, pipelinePath string) (response PipelineReleasesListResponse, err error)
 	GetPipelineRelease(ctx context.Context, token string, pipelineReleasePath string) (release *contracts.Release, err error)
 	GetPipelineReleaseLogs(ctx context.Context, token string, pipelineReleasePath string) (releaseLogs PipelineReleasesLogsListResponse, err error)
+	GetPipelineBots(ctx context.Context, token string, pipelinePath string) (response PipelineBotsListResponse, err error)
+	GetPipelineBot(ctx context.Context, token string, pipelineBotPath string) (bot *contracts.Bot, err error)
+	GetPipelineBotLogs(ctx context.Context, token string, pipelineBotPath string) (botLogs PipelineBotsLogsListResponse, err error)
 	GetBytesResponse(ctx context.Context, token string, path string) (bytes []byte, err error)
 	GetSSEResponse(ctx context.Context, token string, path string, maxNumberOfEvents int) (bytes []byte, err error)
 }
@@ -302,6 +305,87 @@ func (c *apiClient) GetPipelineReleaseLogs(ctx context.Context, token string, pi
 	}
 
 	return releaseLogs, nil
+}
+
+func (c *apiClient) GetPipelineBots(ctx context.Context, token string, pipelinePath string) (response PipelineBotsListResponse, err error) {
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineBots")
+	defer span.Finish()
+
+	getPipelineBotsURL := fmt.Sprintf("%v/api/pipelines/%v/bots?page[number]=%v&page[size]=%v", c.apiBaseURL, pipelinePath, 1, 10)
+
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %v", token),
+		"Content-Type":  "application/json",
+	}
+
+	responseBody, err := c.getRequest(getPipelineBotsURL, span, nil, headers)
+	if err != nil {
+		return
+	}
+
+	// unmarshal json body
+	err = json.Unmarshal(responseBody, &response)
+	if err != nil {
+		log.Error().Err(err).Str("body", string(responseBody)).Msgf("Failed unmarshalling get pipeline bots response from %v", getPipelineBotsURL)
+		return
+	}
+
+	return response, nil
+}
+
+func (c *apiClient) GetPipelineBot(ctx context.Context, token string, pipelineBotPath string) (bot *contracts.Bot, err error) {
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineBot")
+	defer span.Finish()
+
+	getPipelineBotURL := fmt.Sprintf("%v%v", c.apiBaseURL, pipelineBotPath)
+
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %v", token),
+		"Content-Type":  "application/json",
+	}
+
+	responseBody, err := c.getRequest(getPipelineBotURL, span, nil, headers)
+	if err != nil {
+		return
+	}
+
+	// unmarshal json body
+	err = json.Unmarshal(responseBody, &bot)
+	if err != nil {
+		log.Error().Err(err).Str("body", string(responseBody)).Msgf("Failed unmarshalling get pipeline bot response from %v", getPipelineBotURL)
+		return
+	}
+
+	return bot, nil
+}
+
+func (c *apiClient) GetPipelineBotLogs(ctx context.Context, token string, pipelineBotPath string) (botLogs PipelineBotsLogsListResponse, err error) {
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "ApiClient::GetPipelineBot")
+	defer span.Finish()
+
+	getPipelineBotLogsURL := fmt.Sprintf("%v%v", c.apiBaseURL, pipelineBotPath)
+
+	headers := map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %v", token),
+		"Content-Type":  "application/json",
+	}
+
+	responseBody, err := c.getRequest(getPipelineBotLogsURL, span, nil, headers)
+	if err != nil {
+		return
+	}
+
+	// unmarshal json body
+	err = json.Unmarshal(responseBody, &botLogs)
+	if err != nil {
+		log.Error().Err(err).Str("body", string(responseBody)).Msgf("Failed unmarshalling get pipeline bot logs response from %v", getPipelineBotLogsURL)
+		return
+	}
+
+	return botLogs, nil
 }
 
 func (c *apiClient) GetBytesResponse(ctx context.Context, token string, path string) (bytes []byte, err error) {

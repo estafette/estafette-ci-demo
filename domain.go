@@ -19,6 +19,11 @@ type PipelineReleasesListResponse struct {
 	Pagination contracts.Pagination `json:"pagination"`
 }
 
+type PipelineBotsListResponse struct {
+	Items      []*contracts.Bot     `json:"items"`
+	Pagination contracts.Pagination `json:"pagination"`
+}
+
 type PipelineBuildsLogsListResponse struct {
 	Items      []*contracts.BuildLog `json:"items"`
 	Pagination contracts.Pagination  `json:"pagination"`
@@ -27,4 +32,9 @@ type PipelineBuildsLogsListResponse struct {
 type PipelineReleasesLogsListResponse struct {
 	Items      []*contracts.ReleaseLog `json:"items"`
 	Pagination contracts.Pagination    `json:"pagination"`
+}
+
+type PipelineBotsLogsListResponse struct {
+	Items      []*contracts.BotLog  `json:"items"`
+	Pagination contracts.Pagination `json:"pagination"`
 }
